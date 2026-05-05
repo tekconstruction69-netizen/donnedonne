@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String      @id @default(cuid())
+  email              String      @unique
+  name               String
+  password           String
+  isSuspended        Boolean     @default(false)
+  disclaimerAccepted Boolean     @default(false)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  posts              Post[]
+  sentMessages       Message[]   @relation("SentMessages")
+  receivedMessages   Message[]   @relation("ReceivedMessages")
+  complaintsReceived Complaint[] @relation("ComplaintsReceived")
+  complaintsMade     Complaint[] @relation("ComplaintsMade")
+}
+
+model Post {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  type         String
+  title        String
+  description  String
+  category     String
+  isHalal      Boolean   @default(false)
+  preparedDate String?
+  address      String
+  latitude     Float
+  longitude    Float
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  messages     Message[]
+  complaints   Complaint[]
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id])
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Complaint {
+  id            String   @id @default(cuid())
+  complainantId String
+  complainant   User     @relation("ComplaintsMade", fields: [complainantId], references: [id])
+  reportedId    String
+  reported      User     @relation("ComplaintsReceived", fields: [reportedId], references: [id])
+  postId        String
+  post          Post     @relation(fields: [postId], references: [id])
+  reason        String
+  createdAt     DateTime @default(now())
+}
